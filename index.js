@@ -1,6 +1,4 @@
-﻿const path = "./target/wasm32-unknown-unknown/release/rwasm.wasm";
-
-const importobject = {
+﻿const importobject = {
     env: {
         console_log: (ptr, length) => {
             const bytes = new Uint8Array(instance.exports.memory.buffer, ptr, length);
@@ -41,4 +39,5 @@ function dataUploadExample(instance) {
     instance.exports.handle_buffer(data.length);
 }
 
+const path = "./target/wasm32-unknown-unknown/release/rwasm.wasm";
 WebAssembly.instantiateStreaming(fetch(path), importobject).then(initialiseWasm);
