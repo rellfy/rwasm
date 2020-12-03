@@ -126,6 +126,50 @@ class WASM {
 
         return this.functions[funcName](string);
     }
+
+    /**
+     * Sends a byte array to a specific buffer.
+     * @param array
+     * @param bufferPointer
+     * @returns {number}
+     */
+    sendUint8ArrayToBuffer(array, bufferPointer) {
+        // Construct buffer inside WASM.
+        const u8 = new Uint8Array(
+            this.instance.exports.memory.buffer,
+            bufferPointer,
+            array.length
+        );
+        // Write data.
+        for (let i = 0; i < array.length; i++) {
+            u8[i] = array[i];
+        }
+        // Return data length to be uploaded to WASM.
+        return array.length;
+    }
+
+    /**
+     * Sends a byte array to a buffer.
+     * @param {Uint8Array} array
+     * @param {string} [getBufferFuncName]
+     * @returns {number}
+     */
+    sendUint8Array(array, getBufferFuncName = "get_buffer_pointer") {
+        return this.sendUint8ArrayToBuffer(array, this.instance.exports[getBufferFuncName]());
+    }
+
+    /**
+     * Converts a string to an Uint8Array.
+     * @param {string} string
+     * @returns {Uint8Array}
+     */
+    static stringToUint8Array(string) {
+        const array = new Uint8Array(string.length);
+        for (let i in string) {
+            array[i] = string.charCodeAt(i);
+        }
+        return array;
+    }
 }
 
 /**
@@ -163,11 +207,17 @@ function dataUploadExample({ instance }) {
 /**
  * Objects of functions which can be called from WASM through RPCs (see function receiveBytes).
  * All inputs are strings (which can be converted back to an Uint8Array if needed).
- * @type {{console_log: functions.console_log}}
  */
 const functions = {
     console_log: (message) => {
         console.log(`[WASM] ${message}`);
+    },
+    // Example: transform a message to upper case and send back to WASM.
+    request_data_example: (message) => {
+        message = message.toUpperCase();
+        const messageAsBytes = WASM.stringToUint8Array(message);
+        // Write data to WASM buffer and return data length.
+        return wasm.sendUint8Array(messageAsBytes, "get_buffer_pointer");
     }
 };
 
