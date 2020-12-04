@@ -7,7 +7,7 @@ fn handle_data_upload_example(length: *const u8) {
     log(format!("Received byte array from JS with {} elements:", length).as_str());
     for i in 0..length {
         unsafe {
-            log(format!("buffer[{}]: {}", i, wasm::get_buffer()[i]).as_str());
+            log(format!("buffer[{}]: {}", i, wasm::get_buffer(0)[i]).as_str());
         }
     }
 }
@@ -24,7 +24,8 @@ fn log(msg: &str) {
 fn make_string_uppercase_from_js(string: &str) {
     let string = wasm::request_string(
         "request_data_example",
-        string.as_bytes()
+        string.as_bytes(),
+        55
     );
     log(format!("Received requested string: {}", string).as_str());
 }

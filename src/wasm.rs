@@ -1,21 +1,53 @@
+use std::collections::HashMap;
+use std::mem::transmute;
+use std::collections::hash_map::Entry;
+
 const BUFFER_SIZE: usize = 128_000;
-static mut BUFFER: [u8; BUFFER_SIZE] = [0; BUFFER_SIZE];
+static mut BUFFERS: Option<HashMap<u32, [u8; BUFFER_SIZE]>> = None;
 
-pub fn get_buffer() -> &'static [u8; BUFFER_SIZE] {
+pub fn get_buffer<'a>(id: u32) -> &'a [u8; BUFFER_SIZE] {
+    let buffers;
+
     unsafe {
-        &BUFFER
+        if BUFFERS.is_none() {
+            BUFFERS = Some(HashMap::new());
+        }
+
+        buffers = BUFFERS.as_mut().unwrap();
+    }
+
+    let buffer = match buffers.entry(id) {
+        Entry::Occupied(o) => o.into_mut(),
+        Entry::Vacant(v) => v.insert([0; BUFFER_SIZE])
+    };
+
+    buffer
+}
+
+pub fn get_buffer_slice(name: u32, size: usize) -> Vec<u8> {
+    unsafe {
+        let buffer = get_buffer(name);
+        (&buffer[0..size]).to_owned()
     }
 }
 
-pub fn get_buffer_slice(size: usize) -> Vec<u8> {
-    unsafe {
-        (&BUFFER[0..size]).to_owned()
-    }
-}
-
-pub fn get_buffer_slice_as_string(size: usize) -> String {
-    let data = get_buffer_slice(size);
+pub fn get_buffer_slice_as_string(name: u32, size: usize) -> String {
+    let data = get_buffer_slice(name, size);
     String::from_utf8(data).unwrap()
+}
+
+pub fn delete_buffer(id: u32) -> Option<(u32, [u8; BUFFER_SIZE])> {
+    let buffers;
+
+    unsafe {
+        if BUFFERS.is_none() {
+            return None;
+        }
+
+        buffers = BUFFERS.as_mut().unwrap();
+    }
+
+    buffers.remove_entry(&id)
 }
 
 pub fn send_bytes(fn_name: &str, bytes: &[u8]) -> usize {
@@ -35,21 +67,23 @@ pub fn send_bytes(fn_name: &str, bytes: &[u8]) -> usize {
     }
 }
 
-pub fn request_bytes(fn_name: &str, bytes: &[u8]) -> Vec<u8> {
-    let size = send_bytes(fn_name, bytes);
-    get_buffer_slice(size)
+pub fn request_bytes(fn_name: &str, bytes: &[u8], buffer_id: u32) -> Vec<u8> {
+    let string = format!("{}.{}", fn_name, buffer_id);
+    let fn_name_with_buffer_id = string.as_str();
+    let size = send_bytes(fn_name_with_buffer_id, bytes);
+    get_buffer_slice(buffer_id, size)
 }
 
-pub fn request_string(fn_name: &str, bytes: &[u8]) -> String {
-    String::from_utf8(request_bytes(fn_name, bytes)).unwrap()
+pub fn request_string(fn_name: &str, bytes: &[u8], buffer_id: u32) -> String {
+    String::from_utf8(request_bytes(fn_name, bytes, buffer_id)).unwrap()
 }
 
-pub fn get_bytes(fn_name: &str) -> Vec<u8> {
-    request_bytes(fn_name, &[])
+pub fn get_bytes(fn_name: &str, buffer_id: u32) -> Vec<u8> {
+    request_bytes(fn_name, &[], buffer_id)
 }
 
-pub fn get_string(fn_name: &str) -> String {
-    String::from_utf8(get_bytes(fn_name)).unwrap()
+pub fn get_string(fn_name: &str, buffer_id: u32) -> String {
+    String::from_utf8(get_bytes(fn_name, buffer_id)).unwrap()
 }
 
 #[no_mangle]
@@ -58,8 +92,6 @@ extern "C" {
 }
 
 #[no_mangle]
-fn get_buffer_pointer() -> *const u8 {
-    unsafe {
-        BUFFER.as_ptr()
-    }
+fn get_buffer_pointer(id: u32) -> *const u8 {
+    get_buffer(id).as_ptr()
 }

@@ -124,7 +124,14 @@ class WASM {
         if (string.length === 0)
             string = null;
 
-        return this.functions[funcName](string);
+        let bufferId = null;
+
+        if (funcName.includes(".")) {
+            bufferId = parseInt(funcName.substring(funcName.lastIndexOf(".") + 1));
+            funcName = funcName.substring(0, funcName.lastIndexOf("."));
+        }
+
+        return this.functions[funcName](string, bufferId);
     }
 
     /**
@@ -151,11 +158,11 @@ class WASM {
     /**
      * Sends a byte array to a buffer.
      * @param {Uint8Array} array
-     * @param {string} [getBufferFuncName]
+     * @param {number} [id]
      * @returns {number}
      */
-    sendUint8Array(array, getBufferFuncName = "get_buffer_pointer") {
-        return this.sendUint8ArrayToBuffer(array, this.instance.exports[getBufferFuncName]());
+    sendUint8Array(array, id = 0) {
+        return this.sendUint8ArrayToBuffer(array, this.instance.exports.get_buffer_pointer(id));
     }
 
     /**
@@ -187,8 +194,8 @@ function multiplyExample({ instance }) {
  * @param {WebAssembly.Instance} instance
  */
 function dataUploadExample({ instance }) {
-    // Get pointer.
-    let bufferPointer =  instance.exports.get_buffer_pointer();
+    // Get pointer for buffer 0.
+    let bufferPointer =  instance.exports.get_buffer_pointer(0);
     // Example byte array.
     let data = new Uint8Array([ 10, 20, 30, 40, 50 ]);
     // Create new array before writing to WASM memory buffer.
@@ -213,11 +220,12 @@ const functions = {
         console.log(`[WASM] ${message}`);
     },
     // Example: transform a message to upper case and send back to WASM.
-    request_data_example: (message) => {
+    // When data is requested, the buffer id to write to is given with the message.
+    request_data_example: (message, bufferId) => {
         message = message.toUpperCase();
         const messageAsBytes = WASM.stringToUint8Array(message);
         // Write data to WASM buffer and return data length.
-        return wasm.sendUint8Array(messageAsBytes, "get_buffer_pointer");
+        return wasm.sendUint8Array(messageAsBytes, bufferId);
     }
 };
 
