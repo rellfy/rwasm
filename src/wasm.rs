@@ -24,15 +24,15 @@ pub fn get_buffer<'a>(id: u32) -> &'a [u8; BUFFER_SIZE] {
     buffer
 }
 
-pub fn get_buffer_slice(name: u32, size: usize) -> Vec<u8> {
+pub fn get_buffer_slice(id: u32, size: usize) -> Vec<u8> {
     unsafe {
-        let buffer = get_buffer(name);
+        let buffer = get_buffer(id);
         (&buffer[0..size]).to_owned()
     }
 }
 
-pub fn get_buffer_slice_as_string(name: u32, size: usize) -> String {
-    let data = get_buffer_slice(name, size);
+pub fn get_buffer_slice_as_string(id: u32, size: usize) -> String {
+    let data = get_buffer_slice(id, size);
     String::from_utf8(data).unwrap()
 }
 

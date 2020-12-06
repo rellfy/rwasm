@@ -35,7 +35,8 @@ class WASM {
     get importObject() {
         return {
             env: {
-                upload_bytes: this.receiveBytes.bind(this)
+                upload_bytes: this.receiveBytes.bind(this),
+                request_timeout: this.registerTimeout.bind(this),
             }
         };
     }
@@ -177,6 +178,17 @@ class WASM {
         }
         return array;
     }
+
+    /**
+     * @param {number} id
+     * @param {number} millis
+     */
+    registerTimeout(id, millis) {
+        console.log("timeout " + id + " for " + millis + "ms");
+        setTimeout(() => {
+            this.instance.exports.trigger_timeout(id);
+        }, millis);
+    }
 }
 
 /**
@@ -218,6 +230,9 @@ function dataUploadExample({ instance }) {
 const functions = {
     console_log: (message) => {
         console.log(`[WASM] ${message}`);
+    },
+    console_error: (message) => {
+        console.error(message);
     },
     // Example: transform a message to upper case and send back to WASM.
     // When data is requested, the buffer id to write to is given with the message.
