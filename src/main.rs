@@ -6,6 +6,8 @@ mod wasm_executor;
 use std::time::Duration;
 use futures::executor::block_on;
 use crate::wasm_async::TimerFuture;
+use std::pin::Pin;
+use std::future::Future;
 
 #[no_mangle]
 fn handle_data_upload_example(length: *const u8) {
@@ -39,7 +41,7 @@ fn make_string_uppercase_from_js(string: &str) {
 
 async fn main_async() {
     log("Hello...");
-    TimerFuture::new(Duration::from_secs(1)).await;
+    // TimerFuture::new(Duration::from_secs(1)).await;
     log("...world!");
 }
 
@@ -53,13 +55,23 @@ fn main() {
     // Make a string uppercase from JS and return it to Rust.
     make_string_uppercase_from_js("this will be uppercase!");
 
-    let (executor, spawner) = wasm_executor::new_executor_and_spawner();
+    // let (executor, spawner) = wasm_executor::new_executor_and_spawner();
 
-    spawner.spawn(main_async());
+    loop {
+        let mut future: Pin<Box<dyn Future<Output = ()> + 'static>> = Box::pin(main_async());
+        let mut futures_context: Option<bool> = None;
+        let futures_context_ref: &mut _ = unsafe { std::mem::transmute(&mut futures_context) };
 
-    drop(spawner);
+        while !matches!(future.as_mut().poll(futures_context_ref), core::task::Poll::Ready(_)) { }
+        break;
+    }
 
-    executor.run();
+
+    // spawner.spawn(main_async());
+
+    // drop(spawner);
+
+    // executor.run();
 
     // block_on(main_async());
 }
