@@ -244,7 +244,7 @@ const functions = {
     }
 };
 
-const path = "./target/wasm32-unknown-unknown/release/rwasm.wasm";
+const path = "/target/wasm32-unknown-unknown/release/rwasm.wasm";
 const wasm = new WASM(path, functions);
 
 wasm.on("load", () => {

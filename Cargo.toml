@@ -4,10 +4,6 @@ version = "0.0.1"
 authors = ["Lorenzo Fontoura <lorenzo@nioel.com>"]
 edition = "2018"
 
-[[bin]]
-path = "src/main.rs"
-name = "rwasm"
-
 [dependencies]
 futures = "0.3.8"
 backtrace = "0.3.55"
