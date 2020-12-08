@@ -9,6 +9,7 @@ use {
         sync::{Arc, Mutex},
         task::{Context, Poll},
         time::Duration,
+        pin::Pin,
     },
 };
 

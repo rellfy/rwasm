@@ -37,6 +37,7 @@ class WASM {
             env: {
                 upload_bytes: this.receiveBytes.bind(this),
                 request_timeout: this.registerTimeout.bind(this),
+                now: () => Date.now()/1000.0,
             }
         };
     }
@@ -244,7 +245,7 @@ const functions = {
     }
 };
 
-const path = "/target/wasm32-unknown-unknown/release/rwasm.wasm";
+const path = "/target/wasm32-unknown-unknown/release/examples/main.wasm";
 const wasm = new WASM(path, functions);
 
 wasm.on("load", () => {

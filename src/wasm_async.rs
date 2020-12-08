@@ -104,3 +104,31 @@ impl TimerFuture {
         timer
     }
 }
+
+// timer delay future
+
+pub struct TimerDelayFuture {
+    pub start_time: f64,
+    pub time: f32,
+}
+
+// impl TimerDelayFuture {
+//     pub fn new(events: SharedEventsQueue) -> EventFuture {
+//         EventFuture { events }
+//     }
+// }
+
+impl Unpin for TimerDelayFuture {}
+
+impl Future for TimerDelayFuture {
+    type Output = Option<()>;
+
+    fn poll(self: Pin<&mut Self>, _: &mut Context) -> Poll<Self::Output> {
+
+        if crate::date::now() - self.start_time >= self.time as f64 {
+            Poll::Ready(Some(()))
+        } else {
+            Poll::Pending
+        }
+    }
+}
