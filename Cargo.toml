@@ -1,8 +1,9 @@
 [package]
 name = "rwasm"
-version = "0.0.1"
+version = "2020.1.0"
 authors = ["Lorenzo Fontoura <lorenzo@nioel.com>"]
 edition = "2018"
+description = "Minimalistic WASM library"
 
 [dependencies]
 backtrace = "0.3.55"
