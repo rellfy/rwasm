@@ -4,6 +4,10 @@ version = "2020.1.0"
 authors = ["Lorenzo Fontoura <lorenzo@nioel.com>"]
 edition = "2018"
 description = "Minimalistic WASM library"
+license = "MIT"
+homepage = "https://github.com/rellfy/rwasm"
+repository = "https://github.com/rellfy/rwasm"
+readme = "README.md"
 
 [dependencies]
 backtrace = "0.3.55"
