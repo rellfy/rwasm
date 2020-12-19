@@ -37,7 +37,7 @@ class WASM {
             env: {
                 upload_bytes: this.receiveBytes.bind(this),
                 request_timeout: this.registerTimeout.bind(this),
-                now: () => Date.now()/1000.0,
+                seconds_now: () => Date.now()/1000.0,
             }
         };
     }
@@ -185,7 +185,6 @@ class WASM {
      * @param {number} millis
      */
     registerTimeout(id, millis) {
-        console.log("timeout " + id + " for " + millis + "ms");
         setTimeout(() => {
             this.instance.exports.trigger_timeout(id);
         }, millis);
