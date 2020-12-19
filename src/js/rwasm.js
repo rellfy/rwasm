@@ -1,0 +1,201 @@
+"use strict";
+
+class RWASM {
+
+    /**
+     * @type {Object}
+     */
+    functions;
+    /**
+     * @type {WebAssembly.Instance}
+     */
+    instance;
+    /**
+     * @type {string}
+     */
+    mainFuncName;
+    /**
+     * Event listeners.
+     */
+    listeners;
+
+    /**
+     * @param {string} path
+     * @param {Object} [functions]
+     * @param {Object} [importObject]
+     * @param {string} [mainFuncName]
+     */
+    constructor(
+        path,
+        functions,
+        importObject = {},
+        mainFuncName = "main"
+    ) {
+        this.mainFuncName = mainFuncName;
+        this.functions = functions;
+        this.listeners = {};
+        this.initialise(path, importObject);
+    }
+
+    get importObject() {
+        return {
+            env: {
+                upload_bytes: this.receiveBytes.bind(this),
+                request_timeout: this.registerTimeout.bind(this),
+                seconds_now: () => Date.now()/1000.0,
+            }
+        };
+    }
+
+    /**
+     * @param {string} path
+     * @param {Object} importObject
+     */
+    async initialise(path, importObject) {
+        const { instance } = await WebAssembly.instantiateStreaming(
+            fetch(path),
+            {
+                ...this.importObject,
+                ...importObject
+            }
+        );
+        this.instance = instance;
+        this.instance.exports[this.mainFuncName]();
+        this.emit("load");
+    }
+
+    /**
+     * @param {string} event
+     * @param {Object} [data]
+     */
+    emit(event, data) {
+        for (let key in this.listeners) {
+            if (key !== event)
+                continue;
+
+            this.listeners[event].forEach(func => {
+                func(data);
+            });
+        }
+    }
+
+    /**
+     * @param {string} event
+     * @param {function} callback
+     */
+    on(event, callback) {
+        if (this.listeners[event] == null)
+            this.listeners[event] = [];
+
+        this.listeners[event].push(callback);
+    }
+
+    /**
+     * Returns a buffer from WASM under a pointer.
+     * @param {number} pointer
+     * @param  {number} length
+     * @returns {Uint8Array}
+     */
+    getDataFromPointer(pointer, length) {
+        return new Uint8Array(this.instance.exports.memory.buffer, pointer, length);
+    }
+
+    /**
+     * Returns a string from WASM under a pointer.
+     * @param {number} pointer
+     * @param  {number} length
+     * @returns {string}
+     */
+    getTextFromPointer(pointer, length) {
+        const bytes = this.getDataFromPointer(pointer, length);
+        return new TextDecoder().decode(bytes);
+    }
+
+    /**
+     * Performs RPC call from WASM with function name and data from pointer.
+     * Return value of RPC must be length of data written to WASM buffer (if any), or undefined.
+     * @param {number} pointer
+     * @param  {number} length
+     * @returns {number | undefined}
+     */
+    receiveBytes(pointer, length) {
+        let string = this.getTextFromPointer(pointer, length);
+        let funcNameSize = 0;
+
+        for (let i = 0; i < string.length; i++) {
+            funcNameSize++;
+
+            if (string[i] === "\0")
+                break;
+        }
+
+        let funcName = string.substr(0, funcNameSize - 1);
+        string = string.substr(funcNameSize, string.length - funcNameSize);
+
+        if (string.length === 0)
+            string = null;
+
+        let bufferId = null;
+
+        if (funcName.includes(".")) {
+            bufferId = parseInt(funcName.substring(funcName.lastIndexOf(".") + 1));
+            funcName = funcName.substring(0, funcName.lastIndexOf("."));
+        }
+
+        return this.functions[funcName](string, bufferId);
+    }
+
+    /**
+     * Sends a byte array to a specific buffer.
+     * @param array
+     * @param bufferPointer
+     * @returns {number}
+     */
+    sendUint8ArrayToBuffer(array, bufferPointer) {
+        // Construct buffer inside WASM.
+        const u8 = new Uint8Array(
+            this.instance.exports.memory.buffer,
+            bufferPointer,
+            array.length
+        );
+        // Write data.
+        for (let i = 0; i < array.length; i++) {
+            u8[i] = array[i];
+        }
+        // Return data length to be uploaded to WASM.
+        return array.length;
+    }
+
+    /**
+     * Sends a byte array to a buffer.
+     * @param {Uint8Array} array
+     * @param {number} [id]
+     * @returns {number}
+     */
+    sendUint8Array(array, id = 0) {
+        return this.sendUint8ArrayToBuffer(array, this.instance.exports.get_buffer_pointer(id));
+    }
+
+    /**
+     * Converts a string to an Uint8Array.
+     * @param {string} string
+     * @returns {Uint8Array}
+     */
+    static stringToUint8Array(string) {
+        const array = new Uint8Array(string.length);
+        for (let i in string) {
+            array[i] = string.charCodeAt(i);
+        }
+        return array;
+    }
+
+    /**
+     * @param {number} id
+     * @param {number} millis
+     */
+    registerTimeout(id, millis) {
+        setTimeout(() => {
+            this.instance.exports.trigger_timeout(id);
+        }, millis);
+    }
+}
