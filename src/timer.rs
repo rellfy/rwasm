@@ -1,4 +1,4 @@
-use std:: {
+use std::{
     future::Future,
     pin::Pin,
     task::{Context, Poll, Waker},
@@ -6,10 +6,9 @@ use std:: {
     collections::HashMap,
     rc::Rc,
     cell::RefCell,
+    cell::Cell,
 };
 use crate::wasm;
-use std::borrow::BorrowMut;
-
 type Listeners = HashMap<u32, Box<dyn Fn() + 'static>>;
 
 static mut LISTENERS: Option<Listeners> = None;
@@ -37,6 +36,11 @@ fn get_listeners() -> &'static mut Listeners {
     }
 }
 
+fn insert_listener(listener_id: u32, callback: Box<dyn Fn() + 'static>) {
+    let listeners = get_listeners();
+    listeners.insert(listener_id, callback);
+}
+
 #[no_mangle]
 fn trigger_timeout(listener_id: u32) {
     let wake = get_listeners().get(&listener_id).unwrap();
@@ -49,19 +53,19 @@ extern "C" {
 }
 
 pub struct TimerFuture {
-    state: Rc<RefCell<State>>
+    state: Rc<RefCell<State>>,
 }
 
 struct State {
-    pub completed: bool,
-    pub waker: Option<Waker>,
+    completed: bool,
+    waker: Option<Waker>,
 }
 
 impl Future for TimerFuture {
     type Output = ();
 
     fn poll(self: Pin<&mut Self>, cx: &mut Context<'_>) -> Poll<Self::Output> {
-        let mut state = (*self.state).borrow_mut();
+        let mut state = self.state.borrow_mut();
 
         if state.completed {
             Poll::Ready(())
@@ -77,22 +81,21 @@ unsafe impl Send for TimerFuture { }
 impl TimerFuture {
     pub fn new(duration: Duration) -> Self {
         let listener_id = get_free_listener_key();
-        let listeners = get_listeners();
         let mut timer = TimerFuture {
             state: Rc::new(RefCell::new(State {
                 completed: false,
                 waker: None
-            }))
+            })),
         };
-        crate::log(format!("listener id: {}", listener_id).as_str());
 
-        let listener_state = timer.state.clone();
-        listeners.insert(listener_id, Box::new(move || {
-            crate::log("completed");
-            let mut state = (*listener_state).borrow_mut();
+        let mut listener_state = timer.state.clone();
+
+        insert_listener(listener_id, Box::new(move || {
+            let mut state = listener_state.borrow_mut();
             state.completed = true;
 
             if let Some(waker) = state.waker.take() {
+                std::mem::drop(state);
                 waker.wake();
             }
         }));
@@ -102,33 +105,5 @@ impl TimerFuture {
         }
 
         timer
-    }
-}
-
-// timer delay future
-
-pub struct TimerDelayFuture {
-    pub start_time: f64,
-    pub time: f32,
-}
-
-// impl TimerDelayFuture {
-//     pub fn new(events: SharedEventsQueue) -> EventFuture {
-//         EventFuture { events }
-//     }
-// }
-
-impl Unpin for TimerDelayFuture {}
-
-impl Future for TimerDelayFuture {
-    type Output = Option<()>;
-
-    fn poll(self: Pin<&mut Self>, _: &mut Context) -> Poll<Self::Output> {
-
-        if crate::date::now() - self.start_time >= self.time as f64 {
-            Poll::Ready(Some(()))
-        } else {
-            Poll::Pending
-        }
     }
 }
