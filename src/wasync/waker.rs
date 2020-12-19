@@ -1,4 +1,3 @@
-#![no_std]
 extern crate alloc;
 use {
     core::{
@@ -31,6 +30,7 @@ pub fn waker_vtable<W: Waker>() -> &'static RawWakerVTable {
     )
 }
 
+#[allow(dead_code)]
 pub fn waker<W>(wake: Arc<W>) -> CoreWaker
     where
         W: Waker,

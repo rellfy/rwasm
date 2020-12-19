@@ -1,5 +1,4 @@
 use std::collections::HashMap;
-use std::mem::transmute;
 use std::collections::hash_map::Entry;
 
 const BUFFER_SIZE: usize = 128_000;
@@ -25,10 +24,8 @@ pub fn get_buffer<'a>(id: u32) -> &'a [u8; BUFFER_SIZE] {
 }
 
 pub fn get_buffer_slice(id: u32, size: usize) -> Vec<u8> {
-    unsafe {
-        let buffer = get_buffer(id);
-        (&buffer[0..size]).to_owned()
-    }
+    let buffer = get_buffer(id);
+    (&buffer[0..size]).to_owned()
 }
 
 pub fn get_buffer_slice_as_string(id: u32, size: usize) -> String {

@@ -6,9 +6,8 @@ use std::{
     collections::HashMap,
     rc::Rc,
     cell::RefCell,
-    cell::Cell,
 };
-use crate::wasm;
+
 type Listeners = HashMap<u32, Box<dyn Fn() + 'static>>;
 
 static mut LISTENERS: Option<Listeners> = None;
@@ -81,14 +80,14 @@ unsafe impl Send for TimerFuture { }
 impl TimerFuture {
     pub fn new(duration: Duration) -> Self {
         let listener_id = get_free_listener_key();
-        let mut timer = TimerFuture {
+        let timer = TimerFuture {
             state: Rc::new(RefCell::new(State {
                 completed: false,
                 waker: None
             })),
         };
 
-        let mut listener_state = timer.state.clone();
+        let listener_state = timer.state.clone();
 
         insert_listener(listener_id, Box::new(move || {
             let mut state = listener_state.borrow_mut();

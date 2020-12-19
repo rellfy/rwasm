@@ -14,5 +14,5 @@ pub fn log(msg: &str) {
 }
 
 pub fn set_error_hook() {
-    std::panic::set_hook(Box::new((error_hook::hook)));
+    std::panic::set_hook(Box::new(error_hook::hook));
 }

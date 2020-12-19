@@ -9,9 +9,7 @@ fn handle_data_upload_example(length: *const u8) {
 
     rwasm::log(format!("Received byte array from JS with {} elements:", length).as_str());
     for i in 0..length {
-        unsafe {
-            rwasm::log(format!("buffer[{}]: {}", i, rwasm::get_buffer(0)[i]).as_str());
-        }
+        rwasm::log(format!("buffer[{}]: {}", i, rwasm::get_buffer(0)[i]).as_str());
     }
 }
 
