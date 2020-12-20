@@ -60,8 +60,8 @@ class RWASM {
             }
         );
         this.instance = instance;
-        this.instance.exports[this.mainFuncName]();
         this.emit("load");
+        this.instance.exports[this.mainFuncName]();
     }
 
     /**
