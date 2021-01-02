@@ -3,6 +3,7 @@ pub mod timer;
 pub mod date;
 mod error_hook;
 mod wasm;
+pub use rwasm_macro::main;
 
 pub use {
     wasm::*,

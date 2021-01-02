@@ -1,15 +1,15 @@
 [package]
-name = "rwasm"
-version = "0.0.1"
+name = "rwasm_macro"
+version = "0.1.0"
 authors = ["Lorenzo Fontoura <lorenzo@nioel.com>"]
 edition = "2018"
-description = "Minimalistic WASM library"
 license = "MIT"
 homepage = "https://github.com/rellfy/rwasm"
 repository = "https://github.com/rellfy/rwasm"
-readme = "README.md"
+description = "rwasm procedural macro"
+publish = false
+
+[lib]
+proc-macro = true
 
 [dependencies]
-backtrace = "0.3.55"
-once_cell = "1.5.2"
-rwasm_macro = { path = "macro" }

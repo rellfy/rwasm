@@ -34,16 +34,13 @@ async fn main_async() {
     rwasm::log("...world!");
 }
 
-// Main does not require #[no_mangle] to be called from WASM.
-fn main() {
+#[rwasm::main]
+async fn main() {
     rwasm::set_error_hook();
-
     // Log something to the console.
-    rwasm::log("Calling console.log() from Rust!");
-
+    rwasm::log("async fn main() says: Hi!");
     // Make a string uppercase from JS and return it to Rust.
     make_string_uppercase_from_js("this will be uppercase!");
-
-    // Start async method.
-    rwasm::wasync::Executor::spawn(main_async());
+    main_async().await;
+    rwasm::log("async fn main() says: Bye!");
 }
