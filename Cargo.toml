@@ -1,6 +1,6 @@
 [package]
 name = "rwasm"
-version = "2020.1.1"
+version = "0.0.1"
 authors = ["Lorenzo Fontoura <lorenzo@nioel.com>"]
 edition = "2018"
 description = "Minimalistic WASM library"
