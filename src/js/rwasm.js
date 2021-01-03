@@ -32,7 +32,7 @@ class RWASM {
         mainFuncName = "main"
     ) {
         this.mainFuncName = mainFuncName;
-        this.functions = functions;
+        this.functions =  RWASM.mergeObjectsRecursively(this.rwasmFunctions, functions);
         this.listeners = {};
         this.initialise(path, importObject);
     }
@@ -47,17 +47,44 @@ class RWASM {
         };
     }
 
+    get rwasmFunctions() {
+        return {
+            console_log: (message) => {
+                console.log(`[WASM] ${message}`);
+            },
+            console_error: (message) => {
+                console.error(`[WASM] ${message}`);
+            },
+        };
+    }
+
+    /**
+     * @param {Object} a
+     * @param {Object} b
+     */
+    static mergeObjectsRecursively(a, b) {
+        const c = a;
+        for (let key in b) {
+            if (typeof b[key] !== "object" || c[key] === null) {
+                c[key] = b[key];
+                continue;
+            }
+            if (typeof c[key] !== "object")
+                c[key] = {};
+            c[key] = RWASM.mergeObjectsRecursively(c[key], b[key]);
+        }
+        return c;
+    }
+
     /**
      * @param {string} path
      * @param {Object} importObject
      */
     async initialise(path, importObject) {
+        let merged = RWASM.mergeObjectsRecursively(this.importObject, importObject);
         const { instance } = await WebAssembly.instantiateStreaming(
             fetch(path),
-            {
-                ...this.importObject,
-                ...importObject
-            }
+            merged,
         );
         this.instance = instance;
         this.emit("load");
@@ -142,7 +169,11 @@ class RWASM {
             funcName = funcName.substring(0, funcName.lastIndexOf("."));
         }
 
-        return this.functions[funcName](string, bufferId);
+        try {
+            return this.functions[funcName](string, bufferId);
+        } catch (e) {
+            throw new Error(`Could not execute requested procedure "${funcName}": ${e}`);
+        }
     }
 
     /**
