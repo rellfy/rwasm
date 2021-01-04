@@ -1,4 +1,9 @@
-﻿# rwasm
+# rwasm
+
+[![Github actions](https://github.com/rellfy/rwasm/workflows/Build/badge.svg)](https://github.com/rellfy/rwasm/actions)
+[![Crate version](https://img.shields.io/crates/v/rwasm.svg)](https://crates.io/crates/rwasm)
+[![License](https://img.shields.io/badge/License-MIT-blue.svg)](https://github.com/rellfy/rwasm/blob/master/LICENSE)
+
 A minimalistic WASM library for Rust.
 
 ## Core concepts
