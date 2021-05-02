@@ -22,7 +22,7 @@ The `request` RPC type sends data to Javascript and expects to receive back an `
 The `usize` value represents the length of the data, in bytes, written to a Buffer identified by an `u32` value, which must be given as a parameter in the `request` RPC.
 
 #### Data buffers
-The `rwasm` library defines a hashmap of type `<u32, [u8; BUFFER_SIZE]>` (where `BUFFER_SIZE` is a constant equals to 128k) and allows insertion of new values as well as retrieval of a pointer to a value identified by the `u32` key, which can be called from Javascript and is used to write data to the specific buffer as requested by a `request` RPC.
+The `rwasm` library defines a hashmap of type `<u32, [u8; BUFFER_SIZE]>` (where `BUFFER_SIZE` is a constant equal to 128k), allowing the insertion of new values and the retrieval of a pointer to a value identified by the `u32` key, which can be called from Javascript and is used to write data to the specific buffer as requested by a `request` RPC.
 
 ## Building
 
