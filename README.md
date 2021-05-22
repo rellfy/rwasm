@@ -9,7 +9,7 @@ A minimalistic WASM library for Rust.
 ## Core concepts
 
 ### Remote Procedure Call
-All user-defined communication from Rust to Javascript happens through remote procedure calls.
+All user-defined communication from Rust to Javascript happens via remote procedure calls.
 The RPCs to be executed are given to the `rwasm` JS instance as regular functions expecting a single `Uint8Array` parameter.
 The user may send the name of the function to be executed along with the data as bytes.
 There are two types of RPCs that can be executed through `rwasm`, described below.
