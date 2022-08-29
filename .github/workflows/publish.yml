@@ -72,10 +72,10 @@ jobs:
           cd rs/macro
           cargo publish \
             --token ${{ secrets.CARGO_REGISTRY_TOKEN }}
+          sleep 60
       - name: Publish rwasm to Crates
         if: always()
         run: |
-          sleep 60
           cd rs
           cargo publish \
             --token ${{ secrets.CARGO_REGISTRY_TOKEN }}
