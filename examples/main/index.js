@@ -1,4 +1,6 @@
-﻿/**
+﻿import {Rwasm} from "../../js/src/index.js";
+
+/**
  * Request a multiplication to be performed in WASM.
  * @param {WebAssembly.Instance} instance
  */
@@ -45,14 +47,14 @@ const functions = {
     // When data is requested, the buffer id to write to is given with the message.
     request_data_example: (message, bufferId) => {
         message = message.toUpperCase();
-        const messageAsBytes = RWASM.stringToUint8Array(message);
+        const messageAsBytes = Rwasm.stringToUint8Array(message);
         // Write data to WASM buffer and return data length.
         return wasm.sendUint8Array(messageAsBytes, bufferId);
     }
 };
 
-const path = "/target/wasm32-unknown-unknown/release/examples/main.wasm";
-const wasm = new RWASM(path, functions);
+const path = "/rs/target/wasm32-unknown-unknown/release/examples/main.wasm";
+const wasm = new Rwasm(path, functions);
 
 wasm.on("load", () => {
     multiplyExample(wasm);
