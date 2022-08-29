@@ -12,6 +12,5 @@ Cargo.lock
 # JetBrains
 .idea/
 
-#Added by cargo
-
+# Cargo build
 rs/target
