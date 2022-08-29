@@ -44,6 +44,7 @@ basic-http-server .
 # Go to the rust project.
 cd rs
 # Build the main example.
+rustup target add wasm32-unknown-unknown
 cargo build --release --example main
 # Go back to the root folder.
 cd ../
