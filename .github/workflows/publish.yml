@@ -1,4 +1,4 @@
-name: Publish npmjs package and gh pages docs
+name: Publish npm and crates packages
 on:
   release:
     types: [created]
