@@ -14,4 +14,4 @@ Cargo.lock
 
 #Added by cargo
 
-/target
+rs/target
