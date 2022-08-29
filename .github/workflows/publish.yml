@@ -47,7 +47,7 @@ jobs:
       - name: Publish to NPM
         run: |
           cd js
-          npm publish --dry-run
+          npm publish
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
   publish-cargo:
@@ -71,11 +71,10 @@ jobs:
         run: |
           cd rs/macro
           cargo publish \
-            --token ${{ secrets.CARGO_REGISTRY_TOKEN }} \
-            --dry-run
+            --token ${{ secrets.CARGO_REGISTRY_TOKEN }}
       - name: Publish rwasm to Crates
+        if: always()
         run: |
           cd rs
           cargo publish \
-            --token ${{ secrets.CARGO_REGISTRY_TOKEN }} \
-            --dry-run
+            --token ${{ secrets.CARGO_REGISTRY_TOKEN }}
