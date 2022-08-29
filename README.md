@@ -37,3 +37,17 @@ You can run a simple static server with cargo:
 cargo install basic-http-server
 basic-http-server .
 ```
+
+## Running the example
+```shell
+# Go to the rust project.
+cd rs
+# Build the main example.
+cargo build --release --example main
+# Go back to the root folder.
+cd ../
+# Serve files statically from root.
+cargo install basic-http-server
+basic-http-server .
+# Open localhost:PORT/examples/main
+```
