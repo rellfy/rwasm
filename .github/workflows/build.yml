@@ -10,22 +10,30 @@ jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v2
-    - name: Cache Cargo
-      uses: actions/cache@v2
-      with:
-        path: |
-          ~/.cargo/registry
-          ~/.cargo/git
-          target
-        key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
-    # Todo: cache ~/.rustup
-    - name: Setup rustup toolchain
-      uses: actions-rs/toolchain@v1
-      with:
-        toolchain: stable
-        override: false
-    - name: Setup WASM target
-      run: rustup target add wasm32-unknown-unknown
-    - name: Build
-      run: cargo build --release --verbose --target=wasm32-unknown-unknown
+      - uses: actions/checkout@v3
+      - name: Cache Cargo
+        uses: actions/cache@v2
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            target
+          key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
+      - name: Cache rustup
+        id: cache-rustup
+        uses: actions/cache@v3
+        with:
+          path: ~/.rustup
+          key: ${{ runner.os }}-rustup
+      - name: Setup rustup toolchain
+        if: steps.cache-rustup.outputs.cache-hit != 'true'
+        uses: actions-rs/toolchain@v1
+        with:
+          toolchain: stable
+          override: false
+      - name: Setup WASM target
+        run: rustup target add wasm32-unknown-unknown
+      - name: Build
+        run: |
+          cd rs
+          cargo build --release --verbose --target=wasm32-unknown-unknown
