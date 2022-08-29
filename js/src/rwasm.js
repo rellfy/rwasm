@@ -1,7 +1,5 @@
-"use strict";
 
-class RWASM {
-
+export default class Rwasm {
     /**
      * @type {Object}
      */
@@ -32,7 +30,7 @@ class RWASM {
         mainFuncName = "main"
     ) {
         this.mainFuncName = mainFuncName;
-        this.functions =  RWASM.mergeObjectsRecursively(this.rwasmFunctions, functions);
+        this.functions = Rwasm.mergeObjectsRecursively(this.rwasmFunctions, functions);
         this.listeners = {};
         this.initialise(path, importObject);
     }
@@ -71,7 +69,7 @@ class RWASM {
             }
             if (typeof c[key] !== "object")
                 c[key] = {};
-            c[key] = RWASM.mergeObjectsRecursively(c[key], b[key]);
+            c[key] = Rwasm.mergeObjectsRecursively(c[key], b[key]);
         }
         return c;
     }
@@ -81,7 +79,7 @@ class RWASM {
      * @param {Object} importObject
      */
     async initialise(path, importObject) {
-        let merged = RWASM.mergeObjectsRecursively(this.importObject, importObject);
+        let merged = Rwasm.mergeObjectsRecursively(this.importObject, importObject);
         const { instance } = await WebAssembly.instantiateStreaming(
             fetch(path),
             merged,
