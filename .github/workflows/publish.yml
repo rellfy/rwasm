@@ -1,0 +1,67 @@
+name: Publish npmjs package and gh pages docs
+on:
+  release:
+    types: [created]
+env:
+  CARGO_TERM_COLOR: always
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: Cache Cargo
+        uses: actions/cache@v2
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            target
+          key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
+      - name: Cache rustup
+        id: cache-rustup
+        uses: actions/cache@v3
+        with:
+          path: ~/.rustup
+          key: ${{ runner.os }}-rustup
+      - name: Setup rustup toolchain
+        if: steps.cache-rustup.outputs.cache-hit != 'true'
+        uses: actions-rs/toolchain@v1
+        with:
+          toolchain: stable
+          override: false
+      - name: Setup WASM target
+        run: rustup target add wasm32-unknown-unknown
+      - name: Build
+        run: cargo build --release --verbose --target=wasm32-unknown-unknown
+  publish-npm:
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: Publish to NPM
+        run: |
+          cd js
+          npm publish
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+  publish-cargo:
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: Cache rustup
+        id: cache-rustup
+        uses: actions/cache@v3
+        with:
+          path: ~/.rustup
+          key: ${{ runner.os }}-rustup
+      - name: Setup rustup toolchain
+        uses: actions-rs/toolchain@v1
+        if: steps.cache-rustup.outputs.cache-hit != 'true'
+        with:
+          toolchain: stable
+          override: true
+      - uses: katyo/publish-crates@v1
+        with:
+          path: "./rs"
+          registry-token: ${{ secrets.CARGO_REGISTRY_TOKEN }}
