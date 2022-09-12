@@ -16,6 +16,10 @@ export default class Rwasm {
      * Event listeners.
      */
     listeners;
+    /**
+     * @type {string}
+     */
+    path;
 
     /**
      * @param {string} path
@@ -25,13 +29,14 @@ export default class Rwasm {
      */
     constructor(
         path,
-        functions,
+        functions = {},
         importObject = {},
         mainFuncName = "main"
     ) {
         this.mainFuncName = mainFuncName;
         this.functions = Rwasm.mergeObjectsRecursively(this.rwasmFunctions, functions);
         this.listeners = {};
+        this.path = path;
         this.initialise(path, importObject);
     }
 
@@ -53,7 +58,20 @@ export default class Rwasm {
             console_error: (message) => {
                 console.error(`[WASM] ${message}`);
             },
+            load_script: (content) => {
+                const script = document.createElement("script");
+                script.type = "module";
+                script.innerHTML = content;
+                document.head.appendChild(script);
+            }
         };
+    }
+
+    static getInjectedImportObject() {
+        const object = window.RWASM_IMPORT;
+        return !!object
+            ? object
+            : {};
     }
 
     /**
@@ -80,11 +98,33 @@ export default class Rwasm {
      */
     async initialise(path, importObject) {
         let merged = Rwasm.mergeObjectsRecursively(this.importObject, importObject);
-        const { instance } = await WebAssembly.instantiateStreaming(
-            fetch(path),
+        const module = await WebAssembly.compileStreaming(fetch(path));
+        const imports = WebAssembly.Module.imports(module);
+        const missing = [];
+        imports.forEach(({ module, name }) => {
+            if (!!merged[module][name]) return;
+            // Place a mock function call in place of the real export.
+            merged[module][name] = () => {};
+            missing.push(name);
+        });
+        this.instance = await WebAssembly.instantiate(
+            module,
             merged,
         );
-        this.instance = instance;
+        // Call the WASM function that triggers injecting the JS app logic into
+        // the page by calling the `load_script` function from `rwasmFunctions`.
+        this.instance.exports.load_scripts();
+        // Give WASM 150 ms to trigger the injection of the scripts.
+        // TODO: find a way to do this synchronously/more reliably
+        await new Promise(resolve => setTimeout(resolve, 150));
+        missing.forEach(name => {
+            merged["env"][name] = Rwasm.getInjectedImportObject().env[name];
+        });
+        this.instance = await WebAssembly.instantiate(
+            module,
+            merged,
+        );
+        window.RWASM_EXPORTS = this.instance.exports;
         this.emit("load");
         this.instance.exports[this.mainFuncName]();
     }
