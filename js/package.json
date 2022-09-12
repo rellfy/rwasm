@@ -1,6 +1,6 @@
 {
   "name": "rwasm",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "description": "rwasm js module",
   "main": "src/index.js",
   "repository": {
